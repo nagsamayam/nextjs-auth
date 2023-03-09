@@ -1,10 +1,20 @@
 import Head from "next/head";
 import styles from "@/styles/Home.module.css";
-import { useState } from "react";
 import Link from "next/link";
+import { useSession, getSession, signOut } from "next-auth/react";
+
+type AuthProps = {
+  session: any;
+  handleGoogleSignOut: any;
+};
 
 export default function Home() {
-  const [session, setSession] = useState(true);
+  const { data: session } = useSession();
+
+  // Google Singin Handler function
+  async function handleGoogleSignOut() {
+    signOut();
+  }
 
   return (
     <div className={styles.container}>
@@ -14,7 +24,9 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>{session ? <Auth /> : <Guest />}</main>
+      <main className={styles.main}>
+        {session ? Auth({ session, handleGoogleSignOut }) : Guest()}
+      </main>
     </div>
   );
 }
@@ -37,19 +49,51 @@ function Guest() {
   );
 }
 
-function Auth() {
+// Authorize User
+function Auth({ session, handleGoogleSignOut }: AuthProps) {
   return (
     <main className="container mx-auto text-center py-20">
       <h3 className="text-4xl font-bold">Authorize User Homepage</h3>
 
+      <div className="details">
+        <h5>{session.user.name}</h5>
+        <h5>{session.user.email}</h5>
+      </div>
+
+      <div className="flex justify-center">
+        <button
+          onClick={handleGoogleSignOut}
+          className="mt-5 px-10 py-1 rounded-sm bg-gray-50"
+        >
+          Sign Out
+        </button>
+      </div>
+
       <div className="flex justify-center">
         <Link
-          href={"/login"}
+          href={"/profile"}
           className="mt-5 px-10 py-1 rounded-sm bg-indigo-500 text-gray-50"
         >
-          Sign In
+          Profile Page
         </Link>
       </div>
     </main>
   );
+}
+
+export async function getServerSideProps({ req }: { req: any }) {
+  const session = await getSession({ req });
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: { session },
+  };
 }

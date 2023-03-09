@@ -5,6 +5,7 @@ import { HiAtSymbol, HiFingerPrint, HiOutlineUser } from "react-icons/hi";
 
 import styles from "@/styles/Form.module.css";
 import Link from "next/link";
+import { getSession } from "next-auth/react";
 
 export default function Register() {
   const [show, setShow] = useState({ password: false, cpassword: false });
@@ -96,4 +97,21 @@ export default function Register() {
       </section>
     </Layout>
   );
+}
+
+export async function getServerSideProps({ req }: { req: any }) {
+  const session = await getSession({ req });
+
+  if (session) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 }
